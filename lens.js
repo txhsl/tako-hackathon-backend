@@ -1,9 +1,9 @@
-import { LensClient, development } from "@lens-protocol/client";
-import fetch from "node-fetch";
+import { LensClient, development } from '@lens-protocol/client';
+import fetch from 'node-fetch';
 
 const ENV = development;
-const PREFIX = "test/";
-const LENSAPI = "https://api-v2-mumbai-live.lens.dev";
+const PREFIX = 'test/';
+const LENSAPI = 'https://api-v2-mumbai-live.lens.dev';
 
 export const GetLensFollowerAmountByHandle = async (handle) => {
   var lensClient = new LensClient({
@@ -32,11 +32,15 @@ const GetDefaultProfileGQL = (address) => {
 export const GetLensFollowerAmountByAddress = async (address) => {
   var query = GetDefaultProfileGQL(address);
   var res = await fetch(LENSAPI, {
-    method: "POST",
+    method: 'POST',
     body: JSON.stringify({query}),
     headers: {
-      "Content-Type": "application/json"
+      'Content-Type': 'application/json'
     }
   });
-  return JSON.parse(await res.text()).data.defaultProfile.stats.followers;
+  var data = JSON.parse(await res.text()).data;
+  if (data.defaultProfile == null) {
+    return 0;
+  }
+  return data.defaultProfile.stats.followers;
 };
