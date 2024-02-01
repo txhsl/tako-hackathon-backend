@@ -6,19 +6,19 @@ const PREFIX = 'test/';
 const LENSAPI = 'https://api-v2-mumbai-live.lens.dev';
 
 export const GetLensFollowerAmountByHandle = async (handle) => {
-  var lensClient = new LensClient({
-    environment: ENV,
-  });
+    var lensClient = new LensClient({
+        environment: ENV,
+    });
 
-  var profile = await lensClient.profile.fetch({
-    forHandle: PREFIX + handle,
-  });
+    var profile = await lensClient.profile.fetch({
+        forHandle: PREFIX + handle,
+    });
 
-  return profile.stats.followers;
+    return profile.stats.followers;
 };
 
 const GetDefaultProfileGQL = (address) => {
-  return `
+    return `
     query GetDefaultProfile {
       defaultProfile(request: {for: "` + address + `" }) {
         stats {
@@ -30,17 +30,17 @@ const GetDefaultProfileGQL = (address) => {
 };
 
 export const GetLensFollowerAmountByAddress = async (address) => {
-  var query = GetDefaultProfileGQL(address);
-  var res = await fetch(LENSAPI, {
-    method: 'POST',
-    body: JSON.stringify({query}),
-    headers: {
-      'Content-Type': 'application/json'
+    var query = GetDefaultProfileGQL(address);
+    var res = await fetch(LENSAPI, {
+        method: 'POST',
+        body: JSON.stringify({ query }),
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    var data = JSON.parse(await res.text()).data;
+    if (data.defaultProfile == null) {
+        return 0;
     }
-  });
-  var data = JSON.parse(await res.text()).data;
-  if (data.defaultProfile == null) {
-    return 0;
-  }
-  return data.defaultProfile.stats.followers;
+    return data.defaultProfile.stats.followers;
 };

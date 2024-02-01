@@ -2,9 +2,10 @@ import Web3 from 'web3';
 import fs from 'fs';
 
 const BASEENDPOINT = 'https://base-mainnet.g.alchemy.com/v2/ZcordjkJcxhfFvwFdLgR1yQHLppJZOna';
+const FRIENDTECHAPI = 'https://prod-api.kosetto.com';
 const CONTRACT = '0xCF205808Ed36593aa40a44F10c7f7C2F67d4A4d4';
 
-export const GetFriendTechKeySupplyByAddress = async(address) => {
+export const GetFriendTechKeySupplyByAddress = async (address) => {
     // get share supply
     var web3 = new Web3(new Web3.providers.HttpProvider(BASEENDPOINT));
     var abi = JSON.parse(fs.readFileSync('public/FriendtechSharesV1.json'));
@@ -13,7 +14,7 @@ export const GetFriendTechKeySupplyByAddress = async(address) => {
     return Number(sharesSupply);
 };
 
-export const GetFriendTechKeyPriceByAddress = async(address) => {
+export const GetFriendTechKeyPriceByAddress = async (address) => {
     // get buy price
     var web3 = new Web3(new Web3.providers.HttpProvider(BASEENDPOINT));
     var abi = JSON.parse(fs.readFileSync('public/FriendtechSharesV1.json'));
@@ -21,3 +22,15 @@ export const GetFriendTechKeyPriceByAddress = async(address) => {
     var buyPrice = await friendTech.methods.getBuyPrice(address, 1).call();
     return Number(buyPrice);
 };
+
+export const GetFriendTechHolderAmountByAddress = async (address) => {
+    // get holder amount
+    var res = await fetch(FRIENDTECHAPI + '/users/' + address, {
+        method: 'GET',
+    });
+    var data = JSON.parse(await res.text());
+    if (data.holderCount == null) {
+        return 0;
+    }
+    return data.holderCount;
+}
