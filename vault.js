@@ -39,14 +39,14 @@ export const VerifySig = async (msg, sig, address) => {
     return web3.eth.accounts.recover(msg, v, r ,s) === address;
 };
 
-export const SignForEvaluate = (to, rank) => {
+export const SignForEvaluate = (address, rank) => {
     // build eip-712 sig
     var typedData = {
         types: EIP712TYPES,
         primaryType: 'Message',
         domain: DOMAIN,
         message: {
-            borrower: to,
+            borrower: address,
             rank: rank,
         },
     };

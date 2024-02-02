@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import { GetFarcasterFollowerAmountByAddress } from './farcaster.js';
 import { GetFriendTechHolderAmountByAddress, GetFriendTechKeySupplyByAddress } from './friend-tech.js';
 import { GetLensFollowerAmountByAddress } from './lens.js';
+import { SignForEvaluate } from './vault.js';
 
 const app = express();
 
@@ -36,15 +37,14 @@ app.get('/evaluate/:address', async function(req, res) {
     var c = GetLensFollowerAmountByAddress(address);
 
     var rank = Math.log2(await a + await b + await c);
-    res.send(rank.toString());
-});
-
-app.post('/borrow', async function(req, res) {
-    var amount = req.body.amount;
-    var msg = req.body.msg;
-    var sig = req.body.sig;
-
-    
+    var sig = SignForEvaluate(address, rank);
+    res.json({
+        message: {
+            borrower: address,
+            rank: rank,
+        },
+        signature: sig,
+    });
 });
 
 const server = app.listen(8080);
