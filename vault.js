@@ -3,7 +3,7 @@ import sigUtil from 'eth-sig-util';
 
 const MUMBAIENDPOINT = 'https://polygon-mumbai.g.alchemy.com/v2/A1L0c_nfqxeZo75pEmmT1KVdr-pFJRVd';
 const PRVKEY = 'd10ef6953afeabc56c3b650946dd451108f14e71435c0c9a64e250da6f6dbee1';
-const CONTRACT = '';
+const CONTRACT = '0x2843F5B72fd962301F72D68964df419FF2325C55';
 
 const EIP712TYPES = {
     EIP712Domain: [
@@ -12,7 +12,7 @@ const EIP712TYPES = {
         { name: 'chainId', type: 'uint256' },
         { name: 'verifyingContract', type: 'address' },
     ],
-    Vault: [
+    Message: [
         { name: 'borrower', type: 'address' },
         { name: 'rank', type: 'uint256' },
     ]
@@ -43,7 +43,7 @@ export const SignForEvaluate = (to, rank) => {
     // build eip-712 sig
     var typedData = {
         types: EIP712TYPES,
-        primaryType: 'Vault',
+        primaryType: 'Message',
         domain: DOMAIN,
         message: {
             borrower: to,
@@ -51,6 +51,5 @@ export const SignForEvaluate = (to, rank) => {
         },
     };
     var sig = sigUtil.signTypedData_v4(Buffer.from(PRVKEY, 'hex'), { data: typedData });
-    console.log(sigUtil.recoverTypedSignature_v4({ data: typedData, sig: sig }));
     return sig;
 };
