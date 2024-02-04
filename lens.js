@@ -19,14 +19,14 @@ export const GetLensFollowerAmountByHandle = async (handle) => {
 
 const GetDefaultProfileGQL = (address) => {
     return `
-    query GetDefaultProfile {
-      defaultProfile(request: {for: "` + address + `" }) {
-        stats {
-          followers
+        query GetDefaultProfile {
+            defaultProfile(request: {for: "` + address + `" }) {
+                stats {
+                followers
+                }
+            }
         }
-      }
-    }
-  `
+    `;
 };
 
 export const GetLensFollowerAmountByAddress = async (address) => {
