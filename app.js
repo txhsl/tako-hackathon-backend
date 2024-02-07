@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import { GetFarcasterFollowerAmountByAddress } from './farcaster.js';
 import { GetFriendTechHolderAmountByAddress, GetFriendTechKeySupplyByAddress } from './friend-tech.js';
 import { GetLensFollowerAmountByAddress } from './lens.js';
-import { SignForEvaluate } from './vault.js';
+import { SignForEvaluate, GetOverdueFactor } from './vault.js';
 
 const app = express();
 
@@ -35,8 +35,9 @@ app.get('/evaluate/:address', async function(req, res) {
     var a = GetFriendTechHolderAmountByAddress(address);
     var b = GetFarcasterFollowerAmountByAddress(address);
     var c = GetLensFollowerAmountByAddress(address);
+    var factor = GetOverdueFactor(address);
 
-    var rank = Math.log2(await a + await b + await c);
+    var rank = Math.log2(await a + await b + await c) * Math.pow(0.9, await factor);
     var sig = SignForEvaluate(address, rank);
     res.json({
         message: {

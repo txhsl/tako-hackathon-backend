@@ -1,9 +1,10 @@
 import Web3 from 'web3';
+import fs from 'fs';
 import sigUtil from 'eth-sig-util';
 
 const MUMBAIENDPOINT = 'https://polygon-mumbai.g.alchemy.com/v2/A1L0c_nfqxeZo75pEmmT1KVdr-pFJRVd';
 const PRVKEY = 'd10ef6953afeabc56c3b650946dd451108f14e71435c0c9a64e250da6f6dbee1';
-const CONTRACT = '0x2843F5B72fd962301F72D68964df419FF2325C55';
+const CONTRACT = '0xE329540c1C02a2f4368516332dCEa15531Fc0A93';
 
 const EIP712TYPES = {
     EIP712Domain: [
@@ -52,4 +53,13 @@ export const SignForEvaluate = (address, rank) => {
     };
     var sig = sigUtil.signTypedData_v4(Buffer.from(PRVKEY, 'hex'), { data: typedData });
     return sig;
+};
+
+export const GetOverdueFactor = async (address) => {
+    var web3 = new Web3(new Web3.providers.HttpProvider(MUMBAIENDPOINT));
+    var abi = JSON.parse(fs.readFileSync('public/Tumpra.json'));
+    var tumpra = new web3.eth.Contract(abi, CONTRACT);
+    var factor = await tumpra.methods.overdueFactor(address).call();
+
+    return Number(factor);
 };
