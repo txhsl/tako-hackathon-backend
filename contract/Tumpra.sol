@@ -29,6 +29,8 @@ contract Tumpra is EIP712 {
     mapping(address => uint256) public vaultsCollected;
     mapping(address => bool) public vaultsBorrowed;
     mapping(address => bool) public vaultsRepayed;
+    mapping(address => uint256) public overdueCount;
+    mapping(address => uint256) public punctualCount;
     mapping(address => mapping(address => uint256)) public stakes;
 
     constructor() EIP712("Tumpra", "1") {}
@@ -117,10 +119,25 @@ contract Tumpra is EIP712 {
             require(msg.value >= vaultsCollected[msg.sender] * (1000 + v.feeRate) / 1000, "invalid repay");
         }
 
+        // update counter
+        if (block.timestamp >= v.endTime) {
+            overdueCount[msg.sender] += 1;
+        } else {
+            punctualCount[msg.sender] += 1;
+        }
+
         // update vault
         vaultsRepayed[msg.sender] = true;
         vaultsCoolOff[msg.sender] = block.timestamp + MINCOOLOFF;
 
         return vaultsCoolOff[msg.sender];
+    }
+
+    function overdueFactor(address _borrower) external view returns (uint256) {
+        if (overdueCount[_borrower] > punctualCount[_borrower]) {
+            return overdueCount[_borrower] - punctualCount[_borrower];
+        } else {
+            return 0;
+        }
     }
 }
