@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import bodyParser from 'body-parser';
 import { GetFarcasterFollowerAmountByAddress } from './farcaster.js';
 import { GetFriendTechHolderAmountByAddress, GetFriendTechKeySupplyByAddress } from './friend-tech.js';
@@ -8,6 +9,7 @@ import { SignForEvaluate, GetOverdueFactor } from './vault.js';
 const app = express();
 
 // app.use('/public', express.static('./public'));
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
