@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { GetFarcasterFollowerAmountByAddress } from './farcaster.js';
-import { GetFriendTechHolderAmountByAddress, GetFriendTechKeySupplyByAddress } from './friend-tech.js';
+import { GetFriendTechHolderAmountByAddress, GetFriendTechKeySupplyByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
 import { GetLensFollowerAmountByAddress, GetLensProfileMetadataByAddress } from './lens.js';
 import { SignForEvaluate, GetOverdueFactor } from './vault.js';
 
@@ -32,6 +32,11 @@ app.get('/stats/:address', async function(req, res) {
         farcaster_follower_amount: await fcFollowerAmount,
         lens_follower_amount: await lFollowerAmount,
     });
+});
+
+app.get('/trades/:address', async function(req, res) {
+    var address = req.params.address;
+    res.json(await GetFriendTechTradeActivitiesByAddress(address));
 });
 
 app.get('/evaluate/:address', async function(req, res) {

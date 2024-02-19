@@ -33,4 +33,16 @@ export const GetFriendTechHolderAmountByAddress = async (address) => {
         return 0;
     }
     return data.holderCount;
-}
+};
+
+export const GetFriendTechTradeActivitiesByAddress = async (address) => {
+    // get holder amount
+    var res = await fetch(FRIENDTECHAPI + '/friends-activity/' + address, {
+        method: 'GET',
+    });
+    var data = JSON.parse(await res.text());
+    if (data.events == null) {
+        return 0;
+    }
+    return data.events;
+};
