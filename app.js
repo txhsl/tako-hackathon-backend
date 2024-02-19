@@ -3,7 +3,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { GetFarcasterFollowerAmountByAddress } from './farcaster.js';
 import { GetFriendTechHolderAmountByAddress, GetFriendTechKeySupplyByAddress } from './friend-tech.js';
-import { GetLensFollowerAmountByAddress } from './lens.js';
+import { GetLensFollowerAmountByAddress, GetLensProfileMetadataByAddress } from './lens.js';
 import { SignForEvaluate, GetOverdueFactor } from './vault.js';
 
 const app = express();
@@ -19,12 +19,14 @@ app.get('/', function(req, res) {
 
 app.get('/stats/:address', async function(req, res) {
     var address = req.params.address;
+    var metadata = GetLensProfileMetadataByAddress(address);
     var ftSupply = GetFriendTechKeySupplyByAddress(address);
     var ftHolderAmount = GetFriendTechHolderAmountByAddress(address);
     var fcFollowerAmount = GetFarcasterFollowerAmountByAddress(address);
     var lFollowerAmount = GetLensFollowerAmountByAddress(address);
 
     res.json({
+        metadata: await metadata,
         friend_tech_key_supply: await ftSupply,
         friend_tech_holder_amount: await ftHolderAmount,
         farcaster_follower_amount: await fcFollowerAmount,
