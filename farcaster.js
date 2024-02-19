@@ -24,7 +24,7 @@ export const GetFarcasterFollowerAmountByAddress = async(address) => {
                 return 0;
             } else {
                 var links = await client.getLinksByTarget({
-                    targetFid: fid,
+                    targetFid: Number(fid),
                     linkType: 'follow',
                 });
                 resolve(links.value.messages.length);
