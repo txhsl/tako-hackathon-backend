@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { GetFarcasterFollowerAmountByAddress } from './farcaster.js';
-import { GetFriendTechHolderAmountByAddress, GetFriendTechKeySupplyByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
-import { GetLensFollowerAmountByAddress, GetLensProfileMetadataByAddress } from './lens.js';
+import { GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
+import { GetLensProfileInfoByAddress } from './lens.js';
 import { SignForEvaluate, GetOverdueFactor } from './vault.js';
 
 const app = express();
@@ -19,18 +19,61 @@ app.get('/', function(req, res) {
 
 app.get('/stats/:address', async function(req, res) {
     var address = req.params.address;
-    var metadata = GetLensProfileMetadataByAddress(address);
-    var ftSupply = GetFriendTechKeySupplyByAddress(address);
-    var ftHolderAmount = GetFriendTechHolderAmountByAddress(address);
     var fcFollowerAmount = GetFarcasterFollowerAmountByAddress(address);
-    var lFollowerAmount = GetLensFollowerAmountByAddress(address);
+    var ftProfile = GetFriendTechProfileByAddress(address);
+    var lProfile = GetLensProfileInfoByAddress(address);
+    var factor = GetOverdueFactor(address);
 
+    var profile = await lProfile;
+    if (profile == null) {
+        res.json({
+            handle: null,
+            name: null,
+            bio: null,
+            pic: null,
+            cover: null,
+            holders: 0,
+            holdings: 0,
+            credit: 0,
+        });
+        return;
+    }
+
+    var handle = profile.handle.localName;
+    var metadata = profile.metadata;
+    var pic = null;
+    var cover = null;
+    if (metadata.picture != null) {
+        pic = metadata.picture.optimized.uri;
+    }
+    if (metadata.coverPicture != null) {
+        cover = metadata.coverPicture.optimized.uri;
+    }
+
+    var stats = await ftProfile;
+    if (stats == null) {
+        res.json({
+            handle: handle,
+            name: metadata.displayName,
+            bio: metadata.bio,
+            pic: pic,
+            cover: cover,
+            holders: 0,
+            holdings: 0,
+            credit: Math.log2(await fcFollowerAmount + 0 + profile.stats.followers) * Math.pow(0.9, await factor),
+        });
+        return;
+    }
+    
     res.json({
-        metadata: await metadata,
-        friend_tech_key_supply: await ftSupply,
-        friend_tech_holder_amount: await ftHolderAmount,
-        farcaster_follower_amount: await fcFollowerAmount,
-        lens_follower_amount: await lFollowerAmount,
+        handle: handle,
+        name: metadata.displayName,
+        bio: metadata.bio,
+        pic: pic,
+        cover: cover,
+        holders: stats.holderCount,
+        holdings: stats.holdingCount,
+        credit: Math.log2(await fcFollowerAmount + stats.holderCount + profile.stats.followers) * Math.pow(0.9, await factor),
     });
 });
 
@@ -41,17 +84,29 @@ app.get('/trades/:address', async function(req, res) {
 
 app.get('/evaluate/:address', async function(req, res) {
     var address = req.params.address;
-    var a = GetFriendTechHolderAmountByAddress(address);
-    var b = GetFarcasterFollowerAmountByAddress(address);
-    var c = GetLensFollowerAmountByAddress(address);
+    var fcFollowerAmount = GetFarcasterFollowerAmountByAddress(address);
+    var ftProfile = GetFriendTechProfileByAddress(address);
+    var lProfile = GetLensProfileInfoByAddress(address);
     var factor = GetOverdueFactor(address);
 
-    var rank = Math.log2(await a + await b + await c) * Math.pow(0.9, await factor);
-    var sig = SignForEvaluate(address, rank);
+    var credit = 0;
+    var profile = await lProfile;
+    if (profile != null) {
+        var a = await fcFollowerAmount;
+        var b = profile.stats.followers;
+        var c = 0;
+        var stats = await ftProfile;
+        if (stats != null) {
+            c = stats.holderCount;
+        }
+        credit = Math.log2(a + b + c) * Math.pow(0.9, await factor);
+    }
+     
+    var sig = SignForEvaluate(address, credit);
     res.json({
         message: {
             borrower: address,
-            rank: rank,
+            rank: credit,
         },
         signature: sig,
     });

@@ -23,16 +23,15 @@ export const GetFriendTechKeyPriceByAddress = async (address) => {
     return Number(buyPrice);
 };
 
-export const GetFriendTechHolderAmountByAddress = async (address) => {
-    // get holder amount
+export const GetFriendTechProfileByAddress = async (address) => {
     var res = await fetch(FRIENDTECHAPI + '/users/' + address, {
         method: 'GET',
     });
     var data = JSON.parse(await res.text());
     if (data.holderCount == null) {
-        return 0;
+        return null;
     }
-    return data.holderCount;
+    return data;
 };
 
 export const GetFriendTechTradeActivitiesByAddress = async (address) => {
@@ -42,7 +41,7 @@ export const GetFriendTechTradeActivitiesByAddress = async (address) => {
     });
     var data = JSON.parse(await res.text());
     if (data.events == null) {
-        return 0;
+        return null;
     }
     return data.events;
 };

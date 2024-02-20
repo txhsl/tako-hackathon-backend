@@ -17,22 +17,16 @@ export const GetLensFollowerAmountByHandle = async (handle) => {
     return profile.stats.followers;
 };
 
-const GetDefaultProfileFollowersGQL = (address) => {
+const GetDefaultProfileInfoGQL = (address) => {
     return `
         query GetDefaultProfile {
             defaultProfile(request: {for: "` + address + `" }) {
+                handle {
+                    localName
+                }
                 stats {
                     followers
                 }
-            }
-        }
-    `;
-};
-
-const GetDefaultProfileMetadataGQL = (address) => {
-    return `
-        query GetDefaultProfile {
-            defaultProfile(request: {for: "` + address + `" }) {
                 metadata {
                     displayName
                     bio
@@ -56,8 +50,8 @@ const GetDefaultProfileMetadataGQL = (address) => {
     `;
 };
 
-export const GetLensFollowerAmountByAddress = async (address) => {
-    var query = GetDefaultProfileFollowersGQL(address);
+export const GetLensProfileInfoByAddress = async (address) => {
+    var query = GetDefaultProfileInfoGQL(address);
     var res = await fetch(LENSAPI, {
         method: 'POST',
         body: JSON.stringify({ query }),
@@ -66,24 +60,5 @@ export const GetLensFollowerAmountByAddress = async (address) => {
         },
     });
     var data = JSON.parse(await res.text()).data;
-    if (data.defaultProfile == null) {
-        return 0;
-    }
-    return data.defaultProfile.stats.followers;
-};
-
-export const GetLensProfileMetadataByAddress = async (address) => {
-    var query = GetDefaultProfileMetadataGQL(address);
-    var res = await fetch(LENSAPI, {
-        method: 'POST',
-        body: JSON.stringify({ query }),
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-    var data = JSON.parse(await res.text()).data;
-    if (data.defaultProfile == null) {
-        return null;
-    }
-    return data.defaultProfile.metadata;
+    return data.defaultProfile;
 };
