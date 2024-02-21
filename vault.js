@@ -26,20 +26,6 @@ const DOMAIN = {
     verifyingContract: CONTRACT,
 };
 
-export const VerifySig = async (msg, sig, address) => {
-    var web3 = new Web3(new Web3.providers.HttpProvider(MUMBAIENDPOINT));
-    
-    // verify msg content
-    
-
-    // verify sig
-    var msg = web3.utils.utf8ToHex(msg);
-    var r = sig.signature.slice(0, 66);
-    var s = '0x' + sig.signature.slice(66, 130);
-    var v = '0x' + sig.signature.slice(130, 132);
-    return web3.eth.accounts.recover(msg, v, r ,s) === address;
-};
-
 export const SignForEvaluate = (address, rank) => {
     // build eip-712 sig
     var typedData = {
