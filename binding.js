@@ -71,17 +71,25 @@ export const RecoverBindingSig = (address, type, id, sig) => {
         type: type,
         id: id
     };
-    return sigUtil.recoverPersonalSignature({
-        data: ethUtil.bufferToHex(Buffer.from(JSON.stringify(data), 'utf8')),
-        sig: sig
-    });
+    try {
+        return sigUtil.recoverPersonalSignature({
+            data: ethUtil.bufferToHex(Buffer.from(JSON.stringify(data), 'utf8')),
+            sig: sig
+        });
+    } catch (err) {
+        return null;
+    }
 };
 
 export const RecoverChangeDisplaySig = (display, sig) => {
-    return sigUtil.recoverPersonalSignature({
-        data: ethUtil.bufferToHex(Buffer.from(display, 'utf8')),
-        sig: sig
-    });
+    try {
+        return sigUtil.recoverPersonalSignature({
+            data: ethUtil.bufferToHex(Buffer.from(display, 'utf8')),
+            sig: sig
+        });
+    } catch (err) {
+        return null;
+    }
 }
 
 // var sig = sigUtil.personalSign(
