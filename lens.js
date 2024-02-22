@@ -5,7 +5,7 @@ const ENV = production;
 const PREFIX = 'lens/';
 const LENSAPI = 'https://api-v2.lens.dev';
 
-export const GetLensFollowerAmountByHandle = async (handle) => {
+export const GetLensProfileByHandle = async (handle) => {
     var lensClient = new LensClient({
         environment: ENV,
     });
@@ -14,7 +14,7 @@ export const GetLensFollowerAmountByHandle = async (handle) => {
         forHandle: PREFIX + handle,
     });
 
-    return profile.stats.followers;
+    return profile;
 };
 
 const GetDefaultProfileInfoGQL = (address) => {

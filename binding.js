@@ -8,7 +8,7 @@ const url = 'mongodb://127.0.0.1:27017/tumpra';
 const bindingSchema = mongoose.Schema({
     address: String,
     lensHandle: String,
-    farcasterId: String,
+    farcasterId: Number,
     friendtechAddr: String,
 });
 
@@ -31,8 +31,20 @@ export const AddBindings = async (address, type, id) => {
     });
 };
 
+export const CheckDuplication = async (type, id) => {
+    var data = {};
+    data[type] = id;
+
+    var doc = await Binding.findOne(
+        data,
+    ).catch((err) => {
+        console.log(err);
+    });
+    return doc != null;
+}
+
 export const GetBindings = async (address) => {
-    const doc = await Binding.findOne(
+    var doc = await Binding.findOne(
         { address: address },
     ).catch((err) => {
         console.log(err);
@@ -41,7 +53,7 @@ export const GetBindings = async (address) => {
 };
 
 // Sig things
-export const VerifyBindingSig = (address, type, id, sig) => {
+export const RecoverBindingSig = (address, type, id, sig) => {
     var data = {
         domain: 'Tumpra',
         address: address,
@@ -51,7 +63,7 @@ export const VerifyBindingSig = (address, type, id, sig) => {
     return sigUtil.recoverPersonalSignature({
         data: ethUtil.bufferToHex(Buffer.from(JSON.stringify(data), 'utf8')),
         sig: sig        
-    }) == address.toLowerCase();
+    });
 };
 
 // var sig = sigUtil.personalSign(
@@ -60,12 +72,10 @@ export const VerifyBindingSig = (address, type, id, sig) => {
 //         data: JSON.stringify({
 //             domain: 'Tumpra',
 //             address: '0x480dd671880768D24317FA965D00f43D25868892',
-//             type: 'friendtechAddr',
-//             id: '0x480dd671880768D24317FA965D00f43D25868892'
+//             type: 'farcasterId',
+//             id: 195739
 //         })
 //     }
 // );
 
 // console.log(sig);
-
-// console.log(VerifyBindingSig('0x480dd671880768D24317FA965D00f43D25868892', 'friendtechAddr', '0x480dd671880768D24317FA965D00f43D25868892', sig));
