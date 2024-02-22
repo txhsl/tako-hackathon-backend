@@ -77,6 +77,16 @@ app.get('/stats/:address', async function(req, res) {
 
     // read bindings from database
     var bindings = await GetBindings(address);
+    if (bindings == null) {
+        res.json({
+            lens: null,
+            farcaster: null,
+            friendtech: null,
+            credit: 0,
+            display: null
+        });
+        return;
+    }
     
     // fetch stats
     var fcProfile = bindings.farcasterId == null ? new Promise((resolve) => {resolve(null);}) : GetFarcasterProfileById(bindings.farcasterId);
@@ -126,6 +136,10 @@ app.get('/trades/:address', async function(req, res) {
 
     // read bindings from database
     var bindings = await GetBindings(address);
+    if (bindings == null) {
+        res.json([]);
+        return;
+    }
 
     // return trade activities
     res.json(await GetFriendTechTradeActivitiesByAddress(bindings.friendtechAddr));
@@ -136,6 +150,17 @@ app.get('/evaluate/:address', async function(req, res) {
 
     // read bindings from database
     var bindings = await GetBindings(address);
+
+    if (bindings == null) {
+        res.json({
+            message: {
+                borrower: address,
+                rank: 0,
+            },
+            signature: SignForEvaluate(address, 0),
+        });
+        return;
+    }
 
     // fetch stats
     var fcProfile = bindings.farcasterId == null ? new Promise((resolve) => {resolve(null);}) : GetFarcasterProfileById(bindings.farcasterId);
