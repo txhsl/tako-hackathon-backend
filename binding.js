@@ -10,6 +10,7 @@ const bindingSchema = mongoose.Schema({
     lensHandle: String,
     farcasterId: Number,
     friendtechAddr: String,
+    display: String
 });
 
 const Binding = mongoose.model('Binding', bindingSchema, 'bindings');
@@ -25,6 +26,16 @@ export const AddBindings = async (address, type, id) => {
     await Binding.findOneAndUpdate(
         { address: address },
         data,
+        { upsert: true }
+    ).catch((err) => {
+        console.log(err);
+    });
+};
+
+export const ChangeDisplay = async (address, display) => {
+    await Binding.findOneAndUpdate(
+        { address: address },
+        { 'display': display },
         { upsert: true }
     ).catch((err) => {
         console.log(err);
@@ -62,9 +73,16 @@ export const RecoverBindingSig = (address, type, id, sig) => {
     };
     return sigUtil.recoverPersonalSignature({
         data: ethUtil.bufferToHex(Buffer.from(JSON.stringify(data), 'utf8')),
-        sig: sig        
+        sig: sig
     });
 };
+
+export const RecoverChangeDisplaySig = (display, sig) => {
+    return sigUtil.recoverPersonalSignature({
+        data: ethUtil.bufferToHex(Buffer.from(display, 'utf8')),
+        sig: sig
+    });
+}
 
 // var sig = sigUtil.personalSign(
 //     Buffer.from('', 'hex'),

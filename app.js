@@ -5,7 +5,7 @@ import { GetFarcasterProfileById } from './farcaster.js';
 import { GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
 import { GetLensProfileByHandle } from './lens.js';
 import { SignForEvaluate, GetOverdueFactor } from './vault.js';
-import { AddBindings, CheckDuplication, ConnectDB, GetBindings, RecoverBindingSig } from './binding.js';
+import { AddBindings, ChangeDisplay, CheckDuplication, ConnectDB, GetBindings, RecoverBindingSig, RecoverChangeDisplaySig } from './binding.js';
 
 await ConnectDB();
 const app = express();
@@ -34,18 +34,19 @@ app.post('/bind/:address', async function(req, res) {
     var signer = RecoverBindingSig(address, type, id, sig);
     if (type == 'lensHandle') {
         var lProfile = await GetLensProfileByHandle(id);
-        if (lProfile.ownedBy.address.toLowerCase() != signer) {
+        if (lProfile == null || lProfile.ownedBy.address.toLowerCase() != signer) {
             res.status(401).json('invalid sig');
             return;
         }
     } else if (type == 'friendtechAddr') {
-        if (id.toLowerCase() != signer) {
+        var ftProfile = await GetFriendTechProfileByAddress(id);
+        if (ftProfile == null || ftProfile.address.toLowerCase() != signer) {
             res.status(401).json('invalid sig');
             return;
         }
     } else if (type == 'farcasterId') {
         var fcProfile = await GetFarcasterProfileById(id);
-        if (fcProfile.extras.custodyAddress.toLowerCase() != signer) {
+        if (fcProfile == null || fcProfile.extras.custodyAddress.toLowerCase() != signer) {
             res.status(401).json('invalid sig');
             return;
         }
@@ -92,7 +93,32 @@ app.get('/stats/:address', async function(req, res) {
             + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
             + bindings.lensHandle == null ? 0 : (await lProfile).stats.followers
             ) * Math.pow(0.9, await factor),
+        display: bindings.display == null ? null : bindings.display
     });
+});
+
+app.post('/default/:address', async function(req, res) {
+    var address = req.params.address;
+    var display = req.body.display;
+    var sig = req.body.sig;
+
+    if (display != 'lens' && display != 'farcaster' && display != 'friendtech') {
+        res.sendStatus(400);
+        return;
+    }
+
+    // verify authority
+    var signer = RecoverChangeDisplaySig(display, sig);
+    if (address.toLowerCase() != signer) {
+        res.status(401).json('invalid sig');
+        return;
+    }
+
+    // update database
+    await ChangeDisplay(address, display);
+
+    // return success
+    res.sendStatus(200);
 });
 
 app.get('/trades/:address', async function(req, res) {
