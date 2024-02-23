@@ -1,4 +1,4 @@
-import { LensClient, production } from '@lens-protocol/client';
+import { LensClient, production, ExplorePublicationsOrderByType } from '@lens-protocol/client';
 import fetch from 'node-fetch';
 
 const ENV = production;
@@ -61,4 +61,16 @@ export const GetLensProfileInfoByAddress = async (address) => {
     });
     var data = JSON.parse(await res.text()).data;
     return data.defaultProfile;
+};
+
+export const GetLensExplore = async () => {
+    var lensClient = new LensClient({
+        environment: ENV,
+    });
+
+    var posts = await lensClient.explore.publications({
+        orderBy: ExplorePublicationsOrderByType.Latest,
+    });
+
+    return posts.items;
 };

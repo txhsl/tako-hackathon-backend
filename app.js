@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { GetFarcasterProfileById } from './farcaster.js';
+import { GetFarcasterExplore, GetFarcasterProfileById } from './farcaster.js';
 import { GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
-import { GetLensProfileByHandle } from './lens.js';
+import { GetLensExplore, GetLensProfileByHandle } from './lens.js';
 import { SignForEvaluate, GetOverdueFactor } from './vault.js';
 import { AddBindings, ChangeDisplay, CheckDuplication, ConnectDB, GetBindings, RecoverBindingSig, RecoverChangeDisplaySig } from './binding.js';
 
@@ -131,8 +131,14 @@ app.post('/default/:address', async function(req, res) {
     res.sendStatus(200);
 });
 
-app.get('/trades/:address', async function(req, res) {
+app.get('/explore/:domain/:address', async function(req, res) {
     var address = req.params.address;
+    var domain = req.params.domain;
+
+    if (domain != 'lens' && domain != 'farcaster' && domain != 'friendtech') {
+        res.sendStatus(400);
+        return;
+    }
 
     // read bindings from database
     var bindings = await GetBindings(address);
@@ -142,7 +148,13 @@ app.get('/trades/:address', async function(req, res) {
     }
 
     // return trade activities
-    res.json(await GetFriendTechTradeActivitiesByAddress(bindings.friendtechAddr));
+    if (domain == 'friendtech') {
+        res.json(await GetFriendTechTradeActivitiesByAddress(bindings.friendtechAddr));
+    } else if (domain == 'lens') {
+        res.json(await GetLensExplore());
+    } else if (domain == 'farcaster') {
+        res.json(await GetFarcasterExplore());
+    }
 });
 
 app.get('/evaluate/:address', async function(req, res) {

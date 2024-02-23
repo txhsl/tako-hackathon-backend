@@ -1,7 +1,8 @@
 const TAKOAPI = 'https://api.tako.so';
+const JAMFRENSAPI = 'https://api.jamfrens.so/';
 
 export const GetFarcasterProfileById = async (fid) => {
-    // get followers
+    // fetch from tako
     var res = await fetch(TAKOAPI + '/token/profile/v1/portfolio/view', {
         method: 'POST',
         body: JSON.stringify({ 
@@ -14,4 +15,13 @@ export const GetFarcasterProfileById = async (fid) => {
     });
     var data = JSON.parse(await res.text()).data;
     return data.profile;
+};
+
+export const GetFarcasterExplore = async () => {
+    // fetch from jamfrens
+    var res = await fetch(JAMFRENSAPI + '/v2/content/explore?ecosystem=farcaster', {
+        method: 'GET',
+    });
+    var data = JSON.parse(await res.text()).data;
+    return data.items;
 };
