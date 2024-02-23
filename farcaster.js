@@ -17,6 +17,14 @@ export const GetFarcasterProfileById = async (fid) => {
     return data.profile;
 };
 
+export const GetFarcasterFollowersById  = async (fid) => {
+    return null;
+};
+
+export const GetFarcasterFollowingById  = async (fid) => {
+    return null;
+};
+
 export const GetFarcasterExplore = async () => {
     // fetch from jamfrens
     var res = await fetch(JAMFRENSAPI + '/v2/content/explore?ecosystem=farcaster', {

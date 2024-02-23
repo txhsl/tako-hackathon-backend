@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { GetFarcasterExplore, GetFarcasterProfileById } from './farcaster.js';
-import { GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
-import { GetLensExplore, GetLensProfileByHandle } from './lens.js';
+import { GetFarcasterExplore, GetFarcasterFollowersById, GetFarcasterFollowingById, GetFarcasterProfileById } from './farcaster.js';
+import { GetFriendTechHoldersByAddress, GetFriendTechHoldingsByAddress, GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
+import { GetLensExplore, GetLensFollowersById, GetLensFollowingById, GetLensProfileById } from './lens.js';
 import { SignForEvaluate, GetOverdueFactor } from './vault.js';
 import { AddBindings, ChangeDisplay, CheckDuplication, ConnectDB, GetBindings, RecoverBindingSig, RecoverChangeDisplaySig } from './binding.js';
 
@@ -25,15 +25,15 @@ app.post('/bind/:address', async function(req, res) {
     var id = req.body.id;
     var sig = req.body.sig;
 
-    if (type != 'lensHandle' && type != 'farcasterId' && type != 'friendtechAddr') {
+    if (type != 'lensId' && type != 'farcasterId' && type != 'friendtechAddr') {
         res.sendStatus(400);
         return;
     }
 
     // verify authority
     var signer = RecoverBindingSig(address, type, id, sig);
-    if (type == 'lensHandle') {
-        var lProfile = await GetLensProfileByHandle(id);
+    if (type == 'lensId') {
+        var lProfile = await GetLensProfileById(id);
         if (lProfile == null || lProfile.ownedBy.address.toLowerCase() != signer) {
             res.status(401).json('invalid sig');
             return;
@@ -91,7 +91,7 @@ app.get('/stats/:address', async function(req, res) {
     // fetch stats
     var fcProfile = bindings.farcasterId == null ? new Promise((resolve) => {resolve(null);}) : GetFarcasterProfileById(bindings.farcasterId);
     var ftProfile = bindings.friendtechAddr == null ? new Promise((resolve) => {resolve(null);}) : GetFriendTechProfileByAddress(bindings.friendtechAddr);
-    var lProfile = bindings.lensHandle == null ? new Promise((resolve) => {resolve(null);}) : GetLensProfileByHandle(bindings.lensHandle);
+    var lProfile = bindings.lensId == null ? new Promise((resolve) => {resolve(null);}) : GetLensProfileById(bindings.lensId);
     var factor = GetOverdueFactor(address);
 
     // return for display
@@ -101,7 +101,7 @@ app.get('/stats/:address', async function(req, res) {
         friendtech: await ftProfile,
         credit: Math.log2(bindings.farcasterId == null ? 0 : (await fcProfile).followerCount
             + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
-            + bindings.lensHandle == null ? 0 : (await lProfile).stats.followers
+            + bindings.lensId == null ? 0 : (await lProfile).stats.followers
             ) * Math.pow(0.9, await factor),
         display: bindings.display == null ? null : bindings.display
     });
@@ -157,6 +157,58 @@ app.get('/explore/:domain/:address', async function(req, res) {
     }
 });
 
+app.get('/following/:domain/:address', async function(req, res) {
+    var address = req.params.address;
+    var domain = req.params.domain;
+
+    if (domain != 'lens' && domain != 'farcaster' && domain != 'friendtech') {
+        res.sendStatus(400);
+        return;
+    }
+
+    // read bindings from database
+    var bindings = await GetBindings(address);
+    if (bindings == null) {
+        res.json([]);
+        return;
+    }
+
+    // return trade activities
+    if (domain == 'friendtech') {
+        res.json(await GetFriendTechHoldingsByAddress(bindings.friendtechAddr));
+    } else if (domain == 'lens') {
+        res.json(await GetLensFollowingById(bindings.lensId));
+    } else if (domain == 'farcaster') {
+        res.json(await GetFarcasterFollowingById(bindings.farcasterId));
+    }
+});
+
+app.get('/followers/:domain/:address', async function(req, res) {
+    var address = req.params.address;
+    var domain = req.params.domain;
+
+    if (domain != 'lens' && domain != 'farcaster' && domain != 'friendtech') {
+        res.sendStatus(400);
+        return;
+    }
+
+    // read bindings from database
+    var bindings = await GetBindings(address);
+    if (bindings == null) {
+        res.json([]);
+        return;
+    }
+
+    // return trade activities
+    if (domain == 'friendtech') {
+        res.json(await GetFriendTechHoldersByAddress(bindings.friendtechAddr));
+    } else if (domain == 'lens') {
+        res.json(await GetLensFollowersById(bindings.lensId));
+    } else if (domain == 'farcaster') {
+        res.json(await GetFarcasterFollowersById(bindings.farcasterId));
+    }
+});
+
 app.get('/evaluate/:address', async function(req, res) {
     var address = req.params.address;
 
@@ -177,13 +229,13 @@ app.get('/evaluate/:address', async function(req, res) {
     // fetch stats
     var fcProfile = bindings.farcasterId == null ? new Promise((resolve) => {resolve(null);}) : GetFarcasterProfileById(bindings.farcasterId);
     var ftProfile = bindings.friendtechAddr == null ? new Promise((resolve) => {resolve(null);}) : GetFriendTechProfileByAddress(bindings.friendtechAddr);
-    var lProfile = bindings.lensHandle == null ? new Promise((resolve) => {resolve(null);}) : GetLensProfileByHandle(bindings.lensHandle);
+    var lProfile = bindings.lensId == null ? new Promise((resolve) => {resolve(null);}) : GetLensProfileById(bindings.lensId);
     var factor = GetOverdueFactor(address);
 
     // calculate credit
     var credit = Math.log2(bindings.farcasterId == null ? 0 : (await fcProfile).followerCount
         + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
-        + bindings.lensHandle == null ? 0 : (await lProfile).stats.followers
+        + bindings.lensId == null ? 0 : (await lProfile).stats.followers
         ) * Math.pow(0.9, await factor);
 
     // sign message

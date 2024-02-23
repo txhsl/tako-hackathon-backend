@@ -7,7 +7,7 @@ const url = 'mongodb://127.0.0.1:27017/tumpra';
 
 const bindingSchema = mongoose.Schema({
     address: String,
-    lensHandle: String,
+    lensId: String,
     farcasterId: Number,
     friendtechAddr: String,
     display: String

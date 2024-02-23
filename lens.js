@@ -17,6 +17,42 @@ export const GetLensProfileByHandle = async (handle) => {
     return profile;
 };
 
+export const GetLensProfileById = async (profileId) => {
+    var lensClient = new LensClient({
+        environment: ENV,
+    });
+
+    var profile = await lensClient.profile.fetch({
+        forProfileId: profileId,
+    });
+
+    return profile;
+};
+
+export const GetLensFollowersById = async (profileId) => {
+    var lensClient = new LensClient({
+        environment: ENV,
+    });
+
+    var followers = await lensClient.profile.followers({
+        of: profileId,
+    });
+
+    return followers.items;
+};
+
+export const GetLensFollowingById = async (profileId) => {
+    var lensClient = new LensClient({
+        environment: ENV,
+    });
+
+    var following = await lensClient.profile.following({
+        for: profileId,
+    });
+
+    return following.items;
+};
+
 const GetDefaultProfileInfoGQL = (address) => {
     return `
         query GetDefaultProfile {

@@ -45,3 +45,27 @@ export const GetFriendTechTradeActivitiesByAddress = async (address) => {
     }
     return data.events;
 };
+
+export const GetFriendTechHoldersByAddress = async (address) => {
+    // get holders
+    var res = await fetch(FRIENDTECHAPI + '/users/' + address + '/token/holders', {
+        method: 'GET',
+    });
+    var data = JSON.parse(await res.text());
+    if (data.users == null) {
+        return null;
+    }
+    return data.users;
+};
+
+export const GetFriendTechHoldingsByAddress = async (address) => {
+    // get holdings
+    var res = await fetch(FRIENDTECHAPI + '/users/' + address + '/token-holdings', {
+        method: 'GET',
+    });
+    var data = JSON.parse(await res.text());
+    if (data.users == null) {
+        return null;
+    }
+    return data.users;
+};
