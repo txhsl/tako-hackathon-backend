@@ -1,5 +1,6 @@
+const WARPCASTAPI = 'https://client.warpcast.com';
 const TAKOAPI = 'https://api.tako.so';
-const JAMFRENSAPI = 'https://api.jamfrens.so/';
+const JAMFRENSAPI = 'https://api.jamfrens.so';
 
 export const GetFarcasterProfileById = async (fid) => {
     // fetch from tako
@@ -18,11 +19,21 @@ export const GetFarcasterProfileById = async (fid) => {
 };
 
 export const GetFarcasterFollowersById  = async (fid) => {
-    return null;
+    // fetch from warpcast
+    var res = await fetch(WARPCASTAPI + '/v2/followers?fid=' + fid, {
+        method: 'GET',
+    });
+    var data = JSON.parse(await res.text());
+    return data.result.users;
 };
 
 export const GetFarcasterFollowingById  = async (fid) => {
-    return null;
+    // fetch from warpcast
+    var res = await fetch(WARPCASTAPI + '/v2/following?fid=' + fid, {
+        method: 'GET',
+    });
+    var data = JSON.parse(await res.text());
+    return data.result.users;
 };
 
 export const GetFarcasterExplore = async () => {
