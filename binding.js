@@ -82,12 +82,7 @@ export const RecoverPersonalSig = (msg, sig) => {
 // var sig = sigUtil.personalSign(
 //     Buffer.from('', 'hex'),
 //     {
-//         data: JSON.stringify({
-//             domain: 'Tumpra',
-//             address: '0x480dd671880768D24317FA965D00f43D25868892',
-//             type: 'farcasterId',
-//             id: 195739
-//         })
+//         data: ''
 //     }
 // );
 
