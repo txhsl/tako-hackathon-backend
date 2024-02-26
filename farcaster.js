@@ -6,7 +6,7 @@ export const GetFarcasterProfileById = async (fid) => {
     // fetch from tako
     var res = await fetch(TAKOAPI + '/token/profile/v1/portfolio/view', {
         method: 'POST',
-        body: JSON.stringify({ 
+        body: JSON.stringify({
             "ecosystem": "farcaster",
             "profile_id": fid
         }),
@@ -18,7 +18,7 @@ export const GetFarcasterProfileById = async (fid) => {
     return data.profile;
 };
 
-export const GetFarcasterFollowersById  = async (fid) => {
+export const GetFarcasterFollowersById = async (fid) => {
     // fetch from warpcast
     var res = await fetch(WARPCASTAPI + '/v2/followers?fid=' + fid, {
         method: 'GET',
@@ -27,7 +27,7 @@ export const GetFarcasterFollowersById  = async (fid) => {
     return data.result.users;
 };
 
-export const GetFarcasterFollowingById  = async (fid) => {
+export const GetFarcasterFollowingById = async (fid) => {
     // fetch from warpcast
     var res = await fetch(WARPCASTAPI + '/v2/following?fid=' + fid, {
         method: 'GET',
