@@ -5,6 +5,10 @@ import ethUtil from 'ethereumjs-util';
 // DB things
 const url = 'mongodb://127.0.0.1:27017/tumpra';
 
+export const LensBindMsg = 'http://localhost wants you to sign in with your profile:\n{id}\n\nSign in with Lens to Tempura\n\nURI: http://localhost\nVersion: 1\nChain ID: 80001';
+export const FcBindMsg = 'http://localhost wants you to sign in with your id:\n{id}\n\nSign in with Farcaster to Tempura\n\nURI: http://localhost\nVersion: 1\nChain ID: 80001';
+export const FtBindMsg = 'http://localhost wants you to sign in with your wallet:\n{id}\n\nSign in with Friend Tech to Tempura\n\nURI: http://localhost\nVersion: 1\nChain ID: 80001';
+
 const bindingSchema = mongoose.Schema({
     address: String,
     lensId: String,
@@ -15,7 +19,7 @@ const bindingSchema = mongoose.Schema({
 
 const Binding = mongoose.model('Binding', bindingSchema, 'bindings');
 
-export const ConnectDB = async() => {
+export const ConnectDB = async () => {
     await mongoose.connect(url);
 };
 
@@ -64,33 +68,16 @@ export const GetBindings = async (address) => {
 };
 
 // Sig things
-export const RecoverBindingSig = (address, type, id, sig) => {
-    var data = {
-        domain: 'Tumpra',
-        address: address,
-        type: type,
-        id: id
-    };
+export const RecoverPersonalSig = (msg, sig) => {
     try {
         return sigUtil.recoverPersonalSignature({
-            data: ethUtil.bufferToHex(Buffer.from(JSON.stringify(data), 'utf8')),
+            data: ethUtil.bufferToHex(Buffer.from(msg, 'utf8')),
             sig: sig
         });
     } catch (err) {
         return null;
     }
 };
-
-export const RecoverChangeDisplaySig = (display, sig) => {
-    try {
-        return sigUtil.recoverPersonalSignature({
-            data: ethUtil.bufferToHex(Buffer.from(display, 'utf8')),
-            sig: sig
-        });
-    } catch (err) {
-        return null;
-    }
-}
 
 // var sig = sigUtil.personalSign(
 //     Buffer.from('', 'hex'),
