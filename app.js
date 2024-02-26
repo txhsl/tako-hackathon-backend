@@ -111,7 +111,7 @@ app.post('/bind/:address', async function (req, res) {
 
     // check duplication
     if (await CheckDuplication(type, id)) {
-        res.sendStatus(500).json('binding used');
+        res.status(500).json('binding used');
         return;
     }
 
