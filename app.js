@@ -46,6 +46,24 @@ app.get('/bindmsg/:type/:id', async function (req, res) {
     }
 });
 
+app.get('/binding/:address', async function (req, res) {
+    var address = req.params.address;
+    var bindings = await GetBindings(address);
+    if (bindings == null) {
+        res.json({
+            lens: null,
+            farcaster: null,
+            friendtech: null,
+        });
+        return;
+    }
+    res.json({
+        lens: bindings.lensId,
+        farcaster: bindings.farcasterId,
+        friendtech: bindings.friendtechAddr,
+    });
+});
+
 app.post('/bind/:address', async function (req, res) {
     var address = req.params.address;
     var type = req.body.type;
