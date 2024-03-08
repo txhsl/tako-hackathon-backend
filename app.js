@@ -2,11 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import bodyParser from 'body-parser';
-import { GetFarcasterExplore, GetFarcasterFollowersById, GetFarcasterFollowingById, GetFarcasterProfileById } from './farcaster.js';
+import cookieParser from 'cookie-parser';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+
+import { GetFarcasterExplore, GetFarcasterFollowersById, GetFarcasterFollowingById, GetFarcasterIdByAddress, GetFarcasterProfileById } from './farcaster.js';
 import { GetFriendTechHoldersByAddress, GetFriendTechHoldingsByAddress, GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
-import { GetLensExplore, GetLensFollowersById, GetLensFollowingById, GetLensProfileById } from './lens.js';
+import { GetLensExplore, GetLensFollowersById, GetLensFollowingById, GetLensProfileById, GetLensProfilesByAddress } from './lens.js';
 import { SignForEvaluate, GetOverdueFactor } from './vault.js';
-import { AddBindings, ChangeDisplay, CheckDuplication, ConnectDB, GetBindings, RecoverPersonalSig, LensBindMsg, FcBindMsg, FtBindMsg } from './binding.js';
+import { AddBindings, ChangeDisplay, CheckDuplication, ConnectDB, GetBindings, RecoverPersonalSig, LoginMsg, LensBindMsg, FcBindMsg, FtBindMsg } from './binding.js';
 
 await ConnectDB();
 const app = express();
@@ -16,9 +20,43 @@ app.use(cors());
 app.use(morgan('combined'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(session({
+    resave: false,
+    saveUninitialized: false,
+    secret: 'tumpra',
+    cookie: {
+        maxAge: 24 * 3600 * 1000,
+    },
+    store: new MongoStore({
+        mongoUrl: 'mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false',
+        db: 'tumpra',
+    }),
+}));
 
 app.get('/', function (req, res) {
     res.send('Evaluator is working.');
+});
+
+app.get('/loginmsg/:address', async function (req, res) {
+    var address = req.params.address;
+
+    res.json({ msg: LoginMsg.replace('{id}', address) });
+});
+
+app.post('/login/:address', async function (req, res) {
+    var address = req.params.address;
+    var sig = req.body.sig;
+
+    var msg = LoginMsg.replace('{id}', address);
+    var signer = RecoverPersonalSig(msg, sig);
+    if (signer != address) {
+        res.status(401).json('invalid sig');
+        return;
+    }
+
+    req.session.address = address;
+    res.sendStatus(200);
 });
 
 app.get('/bindmsg/:type/:id', async function (req, res) {
@@ -64,8 +102,7 @@ app.get('/binding/:address', async function (req, res) {
     });
 });
 
-app.post('/bind/:address', async function (req, res) {
-    var address = req.params.address;
+app.post('/bind/', async function (req, res) {
     var type = req.body.type;
     var id = req.body.id;
     var sig = req.body.sig;
@@ -120,8 +157,10 @@ app.post('/bind/:address', async function (req, res) {
             break;
     }
 
+    var mainWallet = req.session.address;
+
     // check existence
-    var bindings = await GetBindings(address);
+    var bindings = await GetBindings(mainWallet);
     if (bindings != null && bindings[type]) {
         res.status(500).json('binding exists');
         return;
@@ -134,10 +173,40 @@ app.post('/bind/:address', async function (req, res) {
     }
 
     // update database
-    await AddBindings(address, type, id);
+    await AddBindings(mainWallet, type, id);
 
     // return success
     res.sendStatus(200);
+});
+
+app.get('/query/:domain/:address', async function (req, res) {
+    var domain = req.params.domain;
+    var address = req.params.address;
+
+    if (domain != 'lens' && domain != 'farcaster' && domain != 'friendtech') {
+        res.sendStatus(400);
+        return;
+    }
+
+    switch (domain) {
+        case 'lens':
+            var handles = await GetLensProfilesByAddress(address);
+            res.json(handles);
+            return;
+        case 'farcaster':
+            var fid = await GetFarcasterIdByAddress(address);
+            if (fid != 0) {
+                res.json(await GetFarcasterProfileById(fid));
+            } else {
+                res.json({});
+            }
+            return;
+        case 'friendtech':
+            res.json(await GetFriendTechProfileByAddress(address));
+            return;
+        default:
+            break;
+    }
 });
 
 app.get('/stats/:address', async function (req, res) {
@@ -175,7 +244,7 @@ app.get('/stats/:address', async function (req, res) {
     });
 });
 
-app.post('/default/:address', async function (req, res) {
+app.post('/display/:address', async function (req, res) {
     var address = req.params.address;
     var display = req.body.display;
     var sig = req.body.sig;

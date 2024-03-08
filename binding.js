@@ -5,6 +5,7 @@ import ethUtil from 'ethereumjs-util';
 // DB things
 const url = 'mongodb://127.0.0.1:27017/tumpra';
 
+export const LoginMsg = 'http://localhost wants you to sign in with your Ethereum account:\n{id}\n\nSign in with wallet to Tempura\n\nURI: http://localhost\nVersion: 1\nChain ID: 80001';
 export const LensBindMsg = 'http://localhost wants you to sign in with your profile:\n{id}\n\nSign in with Lens to Tempura\n\nURI: http://localhost\nVersion: 1\nChain ID: 80001';
 export const FcBindMsg = 'http://localhost wants you to sign in with your id:\n{id}\n\nSign in with Farcaster to Tempura\n\nURI: http://localhost\nVersion: 1\nChain ID: 80001';
 export const FtBindMsg = 'http://localhost wants you to sign in with your wallet:\n{id}\n\nSign in with Friend Tech to Tempura\n\nURI: http://localhost\nVersion: 1\nChain ID: 80001';
