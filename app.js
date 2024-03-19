@@ -50,7 +50,7 @@ app.post('/login/:address', async function (req, res) {
 
     var msg = LoginMsg.replace('{id}', address);
     var signer = RecoverPersonalSig(msg, sig);
-    if (signer != address) {
+    if (signer != address.toLowerCase()) {
         res.status(401).json('invalid sig');
         return;
     }
