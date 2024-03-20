@@ -21,16 +21,20 @@ app.use(morgan('combined'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.set('trust proxy', 1);
 app.use(session({
     resave: false,
     saveUninitialized: false,
-    secret: 'tumpra',
+    name: 'tumpra',
+    secret: 'login',
     cookie: {
         maxAge: 24 * 3600 * 1000,
+        httpOnly: false,
+        secure: true,
+        sameSite: 'none',
     },
     store: new MongoStore({
-        mongoUrl: 'mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false',
-        db: 'tumpra',
+        mongoUrl: 'mongodb://localhost:27017/tumpra',
     }),
 }));
 
