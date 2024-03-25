@@ -99,13 +99,26 @@ app.get('/binding/:address', async function (req, res) {
             lens: null,
             farcaster: null,
             friendtech: null,
+            credit: 0,
         });
         return;
     }
+
+    // fetch stats
+    var fcProfile = bindings.farcasterId == null ? new Promise((resolve) => { resolve(null); }) : GetFarcasterProfileById(bindings.farcasterId);
+    var ftProfile = bindings.friendtechAddr == null ? new Promise((resolve) => { resolve(null); }) : GetFriendTechProfileByAddress(bindings.friendtechAddr);
+    var lProfile = bindings.lensId == null ? new Promise((resolve) => { resolve(null); }) : GetLensProfileById(bindings.lensId);
+    var factor = GetOverdueFactor(address);
+
+    // return with credits
     res.json({
         lens: bindings.lensId,
         farcaster: bindings.farcasterId,
         friendtech: bindings.friendtechAddr,
+        credit: Math.log2(bindings.farcasterId == null ? 0 : (await fcProfile).followerCount
+            + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
+                + bindings.lensId == null ? 0 : (await lProfile).stats.followers
+        ) * Math.pow(0.9, await factor) + 100 + bindings.farcasterId == null ? 0 : 100 + bindings.friendtechAddr == null ? 0 : 100 + bindings.lensId == null ? 0 : 100,
     });
 });
 
@@ -246,7 +259,7 @@ app.get('/stats/:address', async function (req, res) {
         credit: Math.log2(bindings.farcasterId == null ? 0 : (await fcProfile).followerCount
             + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
                 + bindings.lensId == null ? 0 : (await lProfile).stats.followers
-        ) * Math.pow(0.9, await factor),
+        ) * Math.pow(0.9, await factor) + 100 + bindings.farcasterId == null ? 0 : 100 + bindings.friendtechAddr == null ? 0 : 100 + bindings.lensId == null ? 0 : 100,
         display: bindings.display == null ? null : bindings.display
     });
 });
