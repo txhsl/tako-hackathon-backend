@@ -1,10 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import morgan from 'morgan';
 import bodyParser from 'body-parser';
-import cookieParser from 'cookie-parser';
-import session from 'express-session';
-import MongoStore from 'connect-mongo';
+import { expressjwt } from 'express-jwt';
+import { signKey, setToken, verToken } from './token.js';
 
 import { GetFarcasterExplore, GetFarcasterFollowersById, GetFarcasterFollowingById, GetFarcasterIdByAddress, GetFarcasterProfileById } from './farcaster.js';
 import { GetFriendTechHoldersByAddress, GetFriendTechHoldingsByAddress, GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
@@ -15,30 +13,41 @@ import { AddBindings, ChangeDisplay, CheckDuplication, ConnectDB, GetBindings, R
 await ConnectDB();
 const app = express();
 
-// app.use('/public', express.static('./public'));
 app.use(cors({
-    credentials: true,
     origin: true
 }));
-app.use(morgan('combined'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.set('trust proxy', 1);
-app.use(session({
-    resave: false,
-    saveUninitialized: false,
-    name: 'tumpra',
-    secret: 'login',
-    cookie: {
-        maxAge: 24 * 3600 * 1000,
-        httpOnly: false,
-        secure: true,
-        sameSite: 'none',
-    },
-    store: new MongoStore({
-        mongoUrl: 'mongodb://localhost:27017/tumpra',
-    }),
+app.use((req, res, next) => {
+    var token = req.headers['authorization'];
+    if (token == undefined) {
+        res.sendStatus(401);
+    } else {
+        verToken(token).then((info) => {
+            req.address = info.address;
+            return next();
+        }).catch((err) => {
+            res.sendStatus(401);
+        });
+    }
+});
+app.use(expressjwt({
+    algorithms: ['HS256'],
+    secret: signKey,
+}).unless({
+    path: [
+        '/',
+        /^\/loginmsg\//,
+        /^\/login\//,
+        /^\/bindmsg/,
+        /^\/binding/,
+        /^\/query/,
+        /^\/stats/,
+        /^\/explore/,
+        /^\/following/,
+        /^\/followers/,
+        /^\/evaluate/,
+    ]
 }));
 
 app.get('/', function (req, res) {
@@ -62,8 +71,11 @@ app.post('/login/:address', async function (req, res) {
         return;
     }
 
-    req.session.address = address;
-    res.sendStatus(200);
+    setToken(address).then((data) => {
+        res.json({
+            token: data,
+        });
+    });
 });
 
 app.get('/bindmsg/:type/:id', async function (req, res) {
@@ -126,6 +138,7 @@ app.post('/bind/', async function (req, res) {
     var type = req.body.type;
     var id = req.body.id;
     var sig = req.body.sig;
+    var address = req.address;
 
     if (type != 'lensId' && type != 'farcasterId' && type != 'friendtechAddr') {
         res.sendStatus(400);
@@ -177,10 +190,8 @@ app.post('/bind/', async function (req, res) {
             break;
     }
 
-    var mainWallet = req.session.address;
-
     // check existence
-    var bindings = await GetBindings(mainWallet);
+    var bindings = await GetBindings(address);
     if (bindings != null && bindings[type]) {
         res.status(500).json('binding exists');
         return;
@@ -193,7 +204,7 @@ app.post('/bind/', async function (req, res) {
     }
 
     // update database
-    await AddBindings(mainWallet, type, id);
+    await AddBindings(address, type, id);
 
     // return success
     res.sendStatus(200);
