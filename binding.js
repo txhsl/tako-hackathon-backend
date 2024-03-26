@@ -27,6 +27,19 @@ export const ConnectDB = async () => {
 export const AddBindings = async (address, type, id) => {
     var data = {};
     data[type] = id;
+    switch (type) {
+        case 'lensId':
+            data[display] = 'lens';
+            break;
+        case 'farcasterId':
+            data[display] = 'farcaster';
+            break;
+        case 'friendtechAddr':
+            data[display] = 'friendtech';
+            break;
+        default:
+            break;
+    }
 
     await Binding.findOneAndUpdate(
         { address: address },

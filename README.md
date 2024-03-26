@@ -10,7 +10,7 @@ $raiseLimit=socialCredit\ast tumpraBehave\ast unitAmount$
 
 While,
 
-$socialCredit=log(lensFollowerAmount+farcasterFollowerAmount+friendtechHolderAmount)$
+$socialCredit=log_2(lensFollowerAmount+1)+log_2(farcasterFollowerAmount+1)+log_2(friendtechHolderAmount+1)$
 
 And,
 

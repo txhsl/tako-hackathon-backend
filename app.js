@@ -113,7 +113,12 @@ app.get('/binding/:address', async function (req, res) {
             lens: null,
             farcaster: null,
             friendtech: null,
-            credit: 0,
+            credit: {
+                lens: 0,
+                farcaster: 0,
+                friendtech: 0,
+                total: 0,
+            },
         });
         return;
     }
@@ -124,15 +129,21 @@ app.get('/binding/:address', async function (req, res) {
     var lProfile = bindings.lensId == null ? new Promise((resolve) => { resolve(null); }) : GetLensProfileById(bindings.lensId);
     var factor = GetOverdueFactor(address);
 
+    const farcasterCredit = bindings.farcasterId == null ? 0 : Math.log2((await fcProfile).followerCount + 1);
+    const lensCredit = bindings.lensId == null ? 0 : Math.log2((await lProfile).stats.followers + 1);
+    const friendtechCredit = bindings.friendtechAddr == null ? 0 : Math.log2((await ftProfile).holderCount + 1);
+
     // return with credits
     res.json({
         lens: bindings.lensId,
         farcaster: bindings.farcasterId,
         friendtech: bindings.friendtechAddr,
-        credit: Math.log2(bindings.farcasterId == null ? 0 : (await fcProfile).followerCount
-            + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
-                + bindings.lensId == null ? 0 : (await lProfile).stats.followers
-        ) * Math.pow(0.9, await factor) + 100 + bindings.farcasterId == null ? 0 : 100 + bindings.friendtechAddr == null ? 0 : 100 + bindings.lensId == null ? 0 : 100,
+        credit: {
+            lens: lensCredit * Math.pow(0.9, await factor),
+            farcaster: farcasterCredit * Math.pow(0.9, await factor),
+            friendtech: friendtechCredit * Math.pow(0.9, await factor),
+            total: (farcasterCredit + lensCredit + friendtechCredit) * Math.pow(0.9, await factor),
+        },
     });
 });
 
@@ -264,15 +275,16 @@ app.get('/stats/:address', async function (req, res) {
     var lProfile = bindings.lensId == null ? new Promise((resolve) => { resolve(null); }) : GetLensProfileById(bindings.lensId);
     var factor = GetOverdueFactor(address);
 
+    const farcasterCredit = bindings.farcasterId == null ? 0 : Math.log2((await fcProfile).followerCount + 1);
+    const lensCredit = bindings.lensId == null ? 0 : Math.log2((await lProfile).stats.followers + 1);
+    const friendtechCredit = bindings.friendtechAddr == null ? 0 : Math.log2((await ftProfile).holderCount + 1);
+
     // return for display
     res.json({
         lens: await lProfile,
         farcaster: await fcProfile,
         friendtech: await ftProfile,
-        credit: Math.log2(bindings.farcasterId == null ? 0 : (await fcProfile).followerCount
-            + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
-                + bindings.lensId == null ? 0 : (await lProfile).stats.followers
-        ) * Math.pow(0.9, await factor) + 100 + bindings.farcasterId == null ? 0 : 100 + bindings.friendtechAddr == null ? 0 : 100 + bindings.lensId == null ? 0 : 100,
+        credit: (farcasterCredit + lensCredit + friendtechCredit) * Math.pow(0.9, await factor),
         display: bindings.display == null ? null : bindings.display
     });
 });
