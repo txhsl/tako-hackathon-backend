@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import bodyParser from 'body-parser';
 import { expressjwt } from 'express-jwt';
 import { signKey, setToken, verToken } from './token.js';
@@ -16,6 +17,7 @@ const app = express();
 app.use(cors({
     origin: true
 }));
+app.use(morgan('combined'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((req, res, next) => {
