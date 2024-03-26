@@ -21,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use((req, res, next) => {
     var token = req.headers['authorization'];
     if (token == undefined) {
-        res.sendStatus(401);
+        return next();
     } else {
         verToken(token).then((info) => {
             req.address = info.address;
