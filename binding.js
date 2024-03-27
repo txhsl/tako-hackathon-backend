@@ -29,13 +29,13 @@ export const AddBindings = async (address, type, id) => {
     data[type] = id;
     switch (type) {
         case 'lensId':
-            data[display] = 'lens';
+            data['display'] = 'lens';
             break;
         case 'farcasterId':
-            data[display] = 'farcaster';
+            data['display'] = 'farcaster';
             break;
         case 'friendtechAddr':
-            data[display] = 'friendtech';
+            data['display'] = 'friendtech';
             break;
         default:
             break;
