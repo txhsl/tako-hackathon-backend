@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use((req, res, next) => {
     var token = req.headers['authorization'];
-    if (token == undefined) {
+    if (token == undefined || !req.path.includes('/bind/')) {
         return next();
     } else {
         verToken(token).then((info) => {
@@ -242,7 +242,7 @@ app.get('/query/:domain/:address', async function (req, res) {
             if (fid != 0) {
                 res.json(await GetFarcasterProfileById(fid));
             } else {
-                res.json({});
+                res.json(null);
             }
             return;
         case 'friendtech':
