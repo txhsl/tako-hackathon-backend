@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity = 0.8.20;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
@@ -18,6 +18,12 @@ contract Tumpra is EIP712 {
         uint256 endTime;
         uint256 feeRate;
     }
+
+    event NewVault(address borrower, uint256 amount, uint256 startTime, uint256 endTime, uint256 feeRate, uint256 timestamp);
+    event Stake(address staker, address to, uint256 amount, uint256 timestamp);
+    event Borrow(address borrower, uint256 amount, uint256 timestamp);
+    event Repay(address borrower, uint256 amount, uint256 timestamp);
+    event Withdraw(address staker, uint256 amount, uint256 timestamp);
 
     bytes32 constant MESSAGE_TYPE_HASH = keccak256("Message(address borrower,uint256 rank)");
     address constant ADMIN = 0x77c6a598E577a507288b14D6Aa976776F519B974;
@@ -61,6 +67,7 @@ contract Tumpra is EIP712 {
 
         // create vault
         vaultsInfo[_evl.borrower] = _vault;
+        emit NewVault(_evl.borrower, _vault.amount, _vault.startTime, _vault.endTime, _vault.feeRate, block.timestamp);
     }
 
     function stake(address _to) external payable {
@@ -76,6 +83,7 @@ contract Tumpra is EIP712 {
         // update vault, record reward immediately, but unlock after repay
         vaultsCollected[_to] = collected;
         stakes[msg.sender][_to] = msg.value * (1000 + v.feeRate) / 1000;
+        emit Stake(msg.sender, _to, msg.value, block.timestamp);
     }
 
     function borrow() external {
@@ -89,6 +97,7 @@ contract Tumpra is EIP712 {
         // update vault
         uint256 amount = vaultsCollected[msg.sender];
         vaultsBorrowed[msg.sender] = true;
+        emit Borrow(msg.sender, amount, block.timestamp);
         payable(msg.sender).transfer(amount);
     }
 
@@ -102,6 +111,7 @@ contract Tumpra is EIP712 {
         // transfer
         uint256 amount = stakes[msg.sender][_from];
         delete stakes[msg.sender][_from];
+        emit Withdraw(msg.sender, amount, block.timestamp);
         payable(msg.sender).transfer(amount);
     }
 
@@ -129,6 +139,7 @@ contract Tumpra is EIP712 {
         // update vault
         vaultsRepayed[msg.sender] = true;
         vaultsCoolOff[msg.sender] = block.timestamp + MINCOOLOFF;
+        emit Repay(msg.sender, msg.value, block.timestamp);
 
         return vaultsCoolOff[msg.sender];
     }

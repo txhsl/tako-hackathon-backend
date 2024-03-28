@@ -4,13 +4,15 @@ import morgan from 'morgan';
 import bodyParser from 'body-parser';
 import { expressjwt } from 'express-jwt';
 import { signKey, setToken, verToken } from './token.js';
+import { ConnectDB } from './db.js';
 
 import { GetFarcasterExplore, GetFarcasterFollowersById, GetFarcasterFollowingById, GetFarcasterIdByAddress, GetFarcasterProfileById } from './farcaster.js';
 import { GetFriendTechHoldersByAddress, GetFriendTechHoldingsByAddress, GetFriendTechProfileByAddress, GetFriendTechTradeActivitiesByAddress } from './friend-tech.js';
 import { GetLensExplore, GetLensFollowersById, GetLensFollowingById, GetLensProfileById, GetLensProfilesByAddress } from './lens.js';
-import { SignForEvaluate, GetOverdueFactor } from './vault.js';
-import { AddBindings, ChangeDisplay, CheckDuplication, ConnectDB, GetBindings, RecoverPersonalSig, LoginMsg, LensBindMsg, FcBindMsg, FtBindMsg } from './binding.js';
+import { SignForEvaluate, GetOverdueFactor, SetUpTumpraListener } from './vault.js';
+import { AddBindings, ChangeDisplay, CheckDuplication, GetBindings, RecoverPersonalSig, LoginMsg, LensBindMsg, FcBindMsg, FtBindMsg } from './binding.js';
 
+await SetUpTumpraListener();
 await ConnectDB();
 const app = express();
 
@@ -415,10 +417,11 @@ app.get('/evaluate/:address', async function (req, res) {
     var factor = GetOverdueFactor(address);
 
     // calculate credit
-    var credit = Math.log2(bindings.farcasterId == null ? 0 : (await fcProfile).followerCount
-        + bindings.friendtechAddr == null ? 0 : (await ftProfile).holderCount
-            + bindings.lensId == null ? 0 : (await lProfile).stats.followers
-    ) * Math.pow(0.9, await factor);
+    const farcasterCredit = bindings.farcasterId == null ? 0 : Math.log2((await fcProfile).followerCount + 1);
+    const lensCredit = bindings.lensId == null ? 0 : Math.log2((await lProfile).stats.followers + 1);
+    const friendtechCredit = bindings.friendtechAddr == null ? 0 : Math.log2((await ftProfile).holderCount + 1);
+
+    var credit = (farcasterCredit + lensCredit + friendtechCredit) * Math.pow(0.9, await factor);
 
     // sign message
     var sig = SignForEvaluate(address, credit);
